@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { AbnormalEventSchema } from '../../../backend/src/schemas/abnormal-event.schema'
+import { AbnormalEventSchema } from '../../../backend/src/schemas/item.schema'
 
 const VALID_OWNER_ID = 'c123456789012345678901234'
 

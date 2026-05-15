@@ -2,7 +2,7 @@ import { Router, type Request, type Response } from 'express'
 import { UserRole } from '@prisma/client'
 import { z } from 'zod'
 
-import { isServiceError } from '../lib/service-error'
+import { sendErrorResponse } from '../lib/error-response'
 import { requireRole } from '../middleware/role.middleware'
 import {
   CreateHandoverSchema,
@@ -55,46 +55,19 @@ const handoverItemMutationParamsSchema = handoverItemParamsSchema.extend({
   itemId: EntityIdSchema,
 })
 
-function buildValidationErrorPayload(error: z.ZodError) {
+function mapHandoverZodError(error: z.ZodError) {
   const issuePaths = error.issues.map((issue) => issue.path.join('.'))
-  const errorCode = issuePaths.some((path) => path.endsWith('ownerId'))
+  const code = issuePaths.some((path) => path.endsWith('ownerId'))
     ? 'OWNER_REQUIRED'
     : issuePaths.some((path) => path.startsWith('categories.'))
       ? 'CATEGORY_ACTIVATED_BUT_EMPTY'
       : 'VALIDATION_FAILED'
 
-  return {
-    statusCode: 400,
-    body: {
-      error: errorCode,
-      message: 'Validation failed',
-      details: error.flatten(),
-    },
-  }
+  return { code }
 }
 
-function sendErrorResponse(res: Response, error: unknown) {
-  if (error instanceof z.ZodError) {
-    const payload = buildValidationErrorPayload(error)
-
-    return res.status(payload.statusCode).json(payload.body)
-  }
-
-  if (isServiceError(error)) {
-    return res.status(error.statusCode).json({
-      error: error.code,
-      message: error.message,
-      details: error.details,
-    })
-  }
-
-  console.error(error)
-
-  return res.status(500).json({
-    error: 'INTERNAL_SERVER_ERROR',
-    message: 'Internal server error',
-    details: {},
-  })
+function sendHandoverErrorResponse(res: Response, error: unknown) {
+  return sendErrorResponse(res, error, { mapZodError: mapHandoverZodError })
 }
 
 router.get(
@@ -111,7 +84,7 @@ router.get(
 
       res.status(200).json(data)
     } catch (error) {
-      sendErrorResponse(res, error)
+      sendHandoverErrorResponse(res, error)
     }
   }
 )
@@ -126,7 +99,7 @@ router.post(
 
       res.status(201).json(handover)
     } catch (error) {
-      sendErrorResponse(res, error)
+      sendHandoverErrorResponse(res, error)
     }
   }
 )
@@ -158,7 +131,7 @@ router.get(
         )
         .send(csv)
     } catch (error) {
-      sendErrorResponse(res, error)
+      sendHandoverErrorResponse(res, error)
     }
   }
 )
@@ -181,7 +154,7 @@ router.get(
         .setHeader('Content-Type', 'text/html; charset=utf-8')
         .send(html)
     } catch (error) {
-      sendErrorResponse(res, error)
+      sendHandoverErrorResponse(res, error)
     }
   }
 )
@@ -201,7 +174,7 @@ router.get(
 
       res.status(200).json(handover)
     } catch (error) {
-      sendErrorResponse(res, error)
+      sendHandoverErrorResponse(res, error)
     }
   }
 )
@@ -217,7 +190,7 @@ router.patch(
 
       res.status(200).json(handover)
     } catch (error) {
-      sendErrorResponse(res, error)
+      sendHandoverErrorResponse(res, error)
     }
   }
 )
@@ -255,7 +228,7 @@ router.post(
 
       res.status(200).json(result)
     } catch (error) {
-      sendErrorResponse(res, error)
+      sendHandoverErrorResponse(res, error)
     }
   }
 )
@@ -280,7 +253,7 @@ router.post(
 
       res.status(200).json(result)
     } catch (error) {
-      sendErrorResponse(res, error)
+      sendHandoverErrorResponse(res, error)
     }
   }
 )
@@ -296,7 +269,7 @@ router.post(
 
       res.status(201).json(item)
     } catch (error) {
-      sendErrorResponse(res, error)
+      sendHandoverErrorResponse(res, error)
     }
   }
 )
@@ -318,7 +291,7 @@ router.patch(
 
       res.status(200).json(item)
     } catch (error) {
-      sendErrorResponse(res, error)
+      sendHandoverErrorResponse(res, error)
     }
   }
 )
@@ -338,7 +311,7 @@ router.delete(
 
       res.status(200).json(deletedItem)
     } catch (error) {
-      sendErrorResponse(res, error)
+      sendHandoverErrorResponse(res, error)
     }
   }
 )

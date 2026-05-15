@@ -1,29 +1,11 @@
-import { Router, type Response } from 'express'
+import { Router } from 'express'
 import { UserRole } from '@prisma/client'
 
-import { isServiceError } from '../lib/service-error'
+import { sendErrorResponse } from '../lib/error-response'
 import { requireRole } from '../middleware/role.middleware'
 import { getDashboardSummary } from '../services/dashboard.service'
 
 const router = Router()
-
-function sendErrorResponse(res: Response, error: unknown) {
-  if (isServiceError(error)) {
-    return res.status(error.statusCode).json({
-      error: error.code,
-      message: error.message,
-      details: error.details,
-    })
-  }
-
-  console.error(error)
-
-  return res.status(500).json({
-    error: 'INTERNAL_SERVER_ERROR',
-    message: 'Internal server error',
-    details: {},
-  })
-}
 
 router.get(
   '/summary',

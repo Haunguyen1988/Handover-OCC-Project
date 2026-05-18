@@ -164,8 +164,14 @@ function setupUpdateTransactionMock() {
 }
 
 // `prisma.handover.findFirst` is called from several different code paths
-// inside one createHandover / updateHandover flow. Dispatch by the shape
-// of the `where` clause so test setup is order-independent.
+// inside one createHandover / updateHandover flow. Dispatch by inspecting
+// the args shape — and crucially distinguish the previous-shift query
+// from the duplicate-shift query, which both look like
+// `{ where: { handoverDate, shift }, select: { id: true } }`. We tell
+// them apart by call order: createHandover runs them in parallel via
+// Promise.all([findPreviousShiftHandoverId, ensureActiveUsers,
+// assertNoDuplicateShiftHandover]) — order in source = 1st call is
+// previous-shift, 2nd findFirst with the same shape is duplicate-shift.
 function dispatchHandoverFindFirst(handlers: {
   forPreviousShift?: () => unknown
   forDuplicateShift?: () => unknown
@@ -173,17 +179,26 @@ function dispatchHandoverFindFirst(handlers: {
   forUpdateLoad?: () => unknown
   forDetailSerialization?: () => unknown
 }) {
+  let dateShiftCalls = 0
   prismaMock.handover.findFirst.mockImplementation(async (args: { where?: Record<string, unknown>; select?: Record<string, unknown>; include?: Record<string, unknown> } = {}) => {
     const where = (args.where ?? {}) as Record<string, unknown>
     const select = (args.select ?? {}) as Record<string, unknown>
     const include = (args.include ?? {}) as Record<string, unknown>
 
-    // findPreviousShiftHandoverId queries by handoverDate + shift, selecting only id.
-    if ('handoverDate' in where && 'shift' in where && !('id' in where)) {
-      return handlers.forPreviousShift?.() ?? null
+    // assertNoDuplicateShiftHandover may include `id: { not: ... }` when
+    // an excludeId is passed (updateHandover path). Detect that branch
+    // first since its where-shape is unambiguous.
+    if ('handoverDate' in where && 'shift' in where && 'id' in where) {
+      return handlers.forDuplicateShift?.() ?? null
     }
-    // assertNoDuplicateShiftHandover queries by handoverDate + shift, possibly with id-not-equal.
+    // Both findPreviousShiftHandoverId and the no-excludeId variant of
+    // assertNoDuplicateShiftHandover query by handoverDate + shift +
+    // select id. Use call order: 1st = previous, 2nd = duplicate.
     if ('handoverDate' in where && 'shift' in where) {
+      dateShiftCalls += 1
+      if (dateShiftCalls === 1) {
+        return handlers.forPreviousShift?.() ?? null
+      }
       return handlers.forDuplicateShift?.() ?? null
     }
     // getHandoverForAccessCheck selects id + preparedById only.

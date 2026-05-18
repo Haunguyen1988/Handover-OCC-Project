@@ -245,7 +245,7 @@ export async function exportHandoverPdfHtml(
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Handover ${handover.referenceId}</title>
+<title>Handover ${escapeHtml(handover.referenceId)}</title>
 <style>
   body { font-family: -apple-system, system-ui, 'Segoe UI', Roboto, sans-serif; color: #1e293b; padding: 32px; margin: 0; font-size: 13px; }
   h1 { font-size: 22px; margin: 0; }

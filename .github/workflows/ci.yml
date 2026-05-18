@@ -24,8 +24,14 @@ jobs:
       - name: Prepare CI environment file
         run: cp .env.example .env
 
+      # The root package.json carries dev tooling only (playwright,
+      # vitest, typescript) and has a peer-dep mismatch on
+      # @napi-rs/wasm-runtime that fails strict `npm ci`. Use
+      # `npm install` for the root only — it lets npm resolve the
+      # peer chain at install time. Backend and frontend keep `npm ci`
+      # so their production trees stay deterministic.
       - name: Install root dependencies
-        run: npm ci
+        run: npm install --no-audit --no-fund
 
       - name: Install backend dependencies
         run: npm --prefix backend ci
@@ -115,8 +121,10 @@ jobs:
             echo "LOG_LEVEL=${LOG_LEVEL}"
           } >> .env
 
+      # See `build` job — root install must be plain `npm install`
+      # to work around the @napi-rs/wasm-runtime peer-dep mismatch.
       - name: Install root dependencies
-        run: npm ci
+        run: npm install --no-audit --no-fund
 
       - name: Install backend dependencies
         run: npm --prefix backend ci

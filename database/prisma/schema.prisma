@@ -248,6 +248,19 @@ model AbnormalEvent {
   @@index([deletedAt])
 }
 
+/// Append-only audit trail.
+///
+/// UPDATE, DELETE, and TRUNCATE on this table are blocked at the
+/// database level by triggers installed in the migration
+/// `20260518000000_audit_log_append_only`. Application code MUST treat
+/// AuditLog as insert-only — there are no Prisma calls to
+/// `auditLog.update()` / `auditLog.delete()` / `auditLog.upsert()`
+/// anywhere in the codebase, and any future caller introducing one
+/// will fail at runtime with SQLSTATE `AL001`.
+///
+/// See `database/prisma/migrations/20260518000000_audit_log_append_only/migration.sql`
+/// for the trigger definitions and the documented emergency-repair
+/// procedure for legitimate corrective DML.
 model AuditLog {
   id          String      @id @default(cuid())
   handoverId  String

@@ -6,7 +6,9 @@
     "build": "next build",
     "start": "next start -p 3000",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "echo 'No frontend-specific tests yet.' && exit 0",
+    "test:coverage": "echo 'No frontend-specific tests yet.' && exit 0"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.7.4",

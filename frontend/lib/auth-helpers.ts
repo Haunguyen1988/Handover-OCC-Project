@@ -1,7 +1,14 @@
 /**
- * Server-side auth helpers built on top of NextAuth.js v5 (`auth()` from
- * `auth.ts`). Use these inside Server Components, route handlers, and
- * server actions to read the current user and enforce role gates.
+ * Auth helpers for the OCC Handover frontend.
+ *
+ * This module exposes two complementary sets of helpers:
+ *
+ * 1. Server-side helpers built on top of NextAuth.js v5 (`auth()` from
+ *    `auth.ts`). Use these inside Server Components, route handlers, and
+ *    server actions to read the current user and enforce role gates.
+ *
+ * 2. Client/middleware route-guard helpers used by `middleware.ts` to
+ *    decide whether a request should be redirected based on auth state.
  *
  * The actual `auth()` function is exported from `auth.ts` (see
  * `auth.example.ts`). This file documents the helper shapes so your
@@ -10,6 +17,10 @@
 import type { UserRole, UserSummary } from './types';
 import type { Capability } from './permissions';
 import { can } from './permissions';
+
+// ---------------------------------------------------------------------------
+// Server-side helpers (Server Components / Route Handlers / Server Actions)
+// ---------------------------------------------------------------------------
 
 /**
  * Drop-in replacement for `auth()` returning a session-shaped object.
@@ -87,4 +98,56 @@ function redirect(url: string): never {
   const err = new Error(`REDIRECT:${url}`);
   (err as Error & { digest?: string }).digest = `NEXT_REDIRECT;replace;${url};307;`;
   throw err;
+}
+
+// ---------------------------------------------------------------------------
+// Client / middleware route-guard helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Routes that are always accessible without authentication.
+ */
+const PUBLIC_PATHS = new Set(['/login', '/signin', '/forbidden']);
+
+/**
+ * Check whether a path is accessible for the current auth state.
+ *
+ * @param path - The requested URL path.
+ * @param isAuthenticated - Whether the user has a valid session.
+ * @returns `true` if the user may proceed, `false` if a redirect is needed.
+ */
+export function isAuthorizedPath(
+  path: string,
+  isAuthenticated: boolean
+): boolean {
+  // Public pages are always accessible.
+  if (PUBLIC_PATHS.has(path)) return true;
+
+  // Authenticated users can access all non-public routes.
+  return isAuthenticated;
+}
+
+/**
+ * Determine where to redirect the user, or `null` if no redirect is needed.
+ *
+ * @param path - The requested URL path.
+ * @param isAuthenticated - Whether the user has a valid session.
+ * @returns Redirect target path, or `null` when no redirect is required.
+ */
+export function getAuthRedirectPath(
+  path: string,
+  isAuthenticated: boolean
+): string | null {
+  // Already on a public page → no redirect needed.
+  if (PUBLIC_PATHS.has(path)) return null;
+
+  // Unauthenticated user trying to access a protected page → login.
+  if (!isAuthenticated) return '/login';
+
+  // Authenticated user on login page → dashboard.
+  if (isAuthenticated && (path === '/login' || path === '/signin')) {
+    return '/dashboard';
+  }
+
+  return null;
 }

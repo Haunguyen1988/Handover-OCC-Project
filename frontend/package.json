@@ -1,0 +1,12 @@
+{
+  "name": "occ-handover-frontend",
+  "private": true,
+  "scripts": {
+    "dev": "echo 'Frontend app not yet scaffolded. See frontend/README.md.' && exit 1",
+    "build": "echo 'Frontend app not yet scaffolded. See frontend/README.md.' && exit 1",
+    "test": "echo 'No frontend-specific tests yet.' && exit 0",
+    "test:coverage": "echo 'No frontend-specific tests yet.' && exit 0"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

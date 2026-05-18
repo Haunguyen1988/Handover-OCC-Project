@@ -109,7 +109,8 @@ describe('extractAuthenticatedUserFromRequest', () => {
 
       const result = extractAuthenticatedUserFromRequest(buildRequest(headers))
 
-      expect(result).toEqual(VALID_USER)
+      expect(result?.user).toEqual(VALID_USER)
+      expect(typeof result?.signedAt).toBe('number')
     })
 
     it.each([
@@ -123,7 +124,7 @@ describe('extractAuthenticatedUserFromRequest', () => {
 
       const result = extractAuthenticatedUserFromRequest(buildRequest(headers))
 
-      expect(result?.role).toBe(role)
+      expect(result?.user.role).toBe(role)
     })
 
     it('falls back to AUTH_SECRET when NEXTAUTH_SECRET is not set', () => {
@@ -134,7 +135,7 @@ describe('extractAuthenticatedUserFromRequest', () => {
 
       const result = extractAuthenticatedUserFromRequest(buildRequest(headers))
 
-      expect(result).toEqual(VALID_USER)
+      expect(result?.user).toEqual(VALID_USER)
     })
 
     it('prefers NEXTAUTH_SECRET over AUTH_SECRET when both are set', () => {
@@ -146,7 +147,7 @@ describe('extractAuthenticatedUserFromRequest', () => {
 
       const result = extractAuthenticatedUserFromRequest(buildRequest(headers))
 
-      expect(result).toEqual(VALID_USER)
+      expect(result?.user).toEqual(VALID_USER)
     })
   })
 
@@ -217,15 +218,21 @@ describe('extractAuthenticatedUserFromRequest', () => {
   // -------------------------------------------------------------------------
 
   describe('rejects timestamps outside the clock-skew window', () => {
-    it('returns null when timestamp is exactly 5 minutes + 1ms in the past', () => {
-      const staleTimestamp = String(Date.now() - FIVE_MIN_MS - 1)
+    // The +1ms margin against the live wall clock is too tight on slow
+    // hosts: the verifier's `Date.now()` can advance several ms between
+    // buildHeaders() and extractAuthenticatedUserFromRequest(), pushing
+    // a +1ms-future timestamp inside the window. Use 1 second of
+    // headroom; we still verify the boundary itself with the fake-timer
+    // tests below.
+    it('returns null when timestamp is more than 5 minutes in the past', () => {
+      const staleTimestamp = String(Date.now() - FIVE_MIN_MS - 1000)
       const headers = buildHeaders(VALID_USER, staleTimestamp, SECRET)
 
       expect(extractAuthenticatedUserFromRequest(buildRequest(headers))).toBeNull()
     })
 
-    it('returns null when timestamp is 5 minutes + 1ms in the future', () => {
-      const futureTimestamp = String(Date.now() + FIVE_MIN_MS + 1)
+    it('returns null when timestamp is more than 5 minutes in the future', () => {
+      const futureTimestamp = String(Date.now() + FIVE_MIN_MS + 1000)
       const headers = buildHeaders(VALID_USER, futureTimestamp, SECRET)
 
       expect(extractAuthenticatedUserFromRequest(buildRequest(headers))).toBeNull()
@@ -241,9 +248,9 @@ describe('extractAuthenticatedUserFromRequest', () => {
       const boundaryTimestamp = String(fixedNow + FIVE_MIN_MS)
       const headers = buildHeaders(VALID_USER, boundaryTimestamp, SECRET)
 
-      expect(extractAuthenticatedUserFromRequest(buildRequest(headers))).toEqual(
-        VALID_USER
-      )
+      const result = extractAuthenticatedUserFromRequest(buildRequest(headers))
+      expect(result?.user).toEqual(VALID_USER)
+      expect(result?.signedAt).toBe(fixedNow + FIVE_MIN_MS)
     })
 
     it('accepts a timestamp at the -5-minute boundary', () => {
@@ -254,9 +261,9 @@ describe('extractAuthenticatedUserFromRequest', () => {
       const boundaryTimestamp = String(fixedNow - FIVE_MIN_MS)
       const headers = buildHeaders(VALID_USER, boundaryTimestamp, SECRET)
 
-      expect(extractAuthenticatedUserFromRequest(buildRequest(headers))).toEqual(
-        VALID_USER
-      )
+      const result = extractAuthenticatedUserFromRequest(buildRequest(headers))
+      expect(result?.user).toEqual(VALID_USER)
+      expect(result?.signedAt).toBe(fixedNow - FIVE_MIN_MS)
     })
 
     it('returns null when timestamp is not numeric', () => {

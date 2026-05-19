@@ -1,15 +1,10 @@
 import { redirect } from 'next/navigation'
 
-import { auth, signOut } from '@/auth'
+import { auth } from '@/auth'
 import { AppShell } from '@/components/layout/AppShell'
 import type { UserRole, UserSummary } from '@/lib/types'
 
 import { Providers } from './Providers'
-
-async function handleSignOut() {
-  'use server'
-  await signOut({ redirectTo: '/signin' })
-}
 
 export default async function AppLayout({
   children,
@@ -34,7 +29,6 @@ export default async function AppLayout({
       <AppShell
         user={user}
         unacknowledgedCriticalCount={0}
-        onSignOut={handleSignOut}
       >
         {children}
       </AppShell>

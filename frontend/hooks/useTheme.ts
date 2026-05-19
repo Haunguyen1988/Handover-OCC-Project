@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import type { ThemeMode } from '../lib/types';
 
 /**
@@ -20,9 +20,13 @@ export function useTheme(defaultTheme: ThemeMode = 'light') {
     document.cookie = `occ_theme=${theme}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`;
   }, [theme]);
 
+  const toggleTheme = useCallback(() => {
+    setThemeState((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  }, []);
+
   return {
     theme,
     setTheme: setThemeState,
-    toggleTheme: () => setThemeState((prev) => (prev === 'dark' ? 'light' : 'dark')),
+    toggleTheme,
   };
 }

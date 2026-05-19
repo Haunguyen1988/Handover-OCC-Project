@@ -1,7 +1,8 @@
 'use client';
 
-import { useMemo, useRef, type ReactNode } from 'react';
+import { useCallback, useMemo, useRef, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import { signOut } from 'next-auth/react';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 import { CriticalBanner } from './CriticalBanner';
@@ -24,7 +25,6 @@ export interface AppShellProps {
   shiftOverride?: Shift | null;
   initialTheme?: ThemeMode;
   recordCount?: number;
-  onSignOut?: () => void;
   children: ReactNode;
 }
 
@@ -39,24 +39,29 @@ export function AppShell({
   shiftOverride,
   initialTheme,
   recordCount,
-  onSignOut,
   children,
 }: AppShellProps) {
   const { t } = useI18n();
   const searchRef = useRef<HTMLInputElement>(null);
   useShiftTheme(shiftOverride ?? null);
 
+  const handleSignOut = useCallback(() => {
+    signOut({ callbackUrl: '/signin' });
+  }, []);
+
+const EMPTY_COMMANDS: ReadonlyArray<Command> = [];
+
   return (
-    <CommandPaletteProvider defaultCommands={[]}>
+    <CommandPaletteProvider defaultCommands={EMPTY_COMMANDS}>
       <CommandPaletteWiring
         searchRef={searchRef}
-        onSignOut={onSignOut}
+        onSignOut={handleSignOut}
         initialTheme={initialTheme}
       />
       <div className="grid min-h-screen grid-cols-[15rem_1fr]" data-i18n-loaded={t !== undefined ? '1' : '0'}>
-        <Sidebar recordCount={recordCount} signOut={onSignOut} />
+        <Sidebar recordCount={recordCount} signOut={handleSignOut} />
         <div className="flex min-h-screen flex-col">
-          <TopBar user={user} initialTheme={initialTheme} onSignOut={onSignOut} searchInputRef={searchRef} />
+          <TopBar user={user} initialTheme={initialTheme} onSignOut={handleSignOut} searchInputRef={searchRef} />
           <CriticalBanner count={unacknowledgedCriticalCount} />
           <main className="flex-1 overflow-y-auto px-6 py-6">
             {children}

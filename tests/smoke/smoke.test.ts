@@ -68,7 +68,7 @@ type HandoverDetailResponse = {
   id: string
   referenceId: string
   handoverDate: string
-  shift: 'Morning' | 'Afternoon' | 'Night'
+  shift: 'Morning' | 'Night'
   isCarriedForward: boolean
   carriedFromId: string | null
   acknowledgedAt: string | null
@@ -213,7 +213,7 @@ async function requireUser(
   return user
 }
 
-async function findAvailableMorningAfternoonDate() {
+async function findAvailableMorningNightDate() {
   const today = toDateOnly(new Date())
 
   for (let offset = 7; offset >= 0; offset -= 1) {
@@ -223,7 +223,7 @@ async function findAvailableMorningAfternoonDate() {
         deletedAt: null,
         handoverDate,
         shift: {
-          in: [Shift.Morning, Shift.Afternoon],
+          in: [Shift.Morning, Shift.Night],
         },
       },
       select: {
@@ -235,14 +235,14 @@ async function findAvailableMorningAfternoonDate() {
 
     if (
       !occupiedShifts.has(Shift.Morning) &&
-      !occupiedShifts.has(Shift.Afternoon)
+      !occupiedShifts.has(Shift.Night)
     ) {
       return formatDateOnly(handoverDate)
     }
   }
 
   throw new Error(
-    'No free Morning/Afternoon date pair was found in the last 8 days. Run "npm run db:seed:uat" to reset the local UAT dataset.'
+    'No free Morning/Night date pair was found in the last 8 days. Run "npm run db:seed:uat" to reset the local UAT dataset.'
   )
 }
 
@@ -386,7 +386,7 @@ describe('Task 4.4 local smoke tests', () => {
         expect(healthResponse.status).toBe(200)
         expect(await healthResponse.json()).toEqual({ status: 'ok' })
 
-        const handoverDate = await findAvailableMorningAfternoonDate()
+        const handoverDate = await findAvailableMorningNightDate()
         const runId = `${SMOKE_TAG}-${handoverDate}-${Date.now()}`
 
         const sourceHandover = await backendRequest<CreateHandoverResponse>(
@@ -400,7 +400,7 @@ describe('Task 4.4 local smoke tests', () => {
               overallPriority: 'High',
               handedToId: supervisor.id,
               generalRemarks: `${runId} source handover`,
-              nextShiftActions: `${runId} create the Afternoon handover to verify auto carry-forward`,
+              nextShiftActions: `${runId} create the Night handover to verify auto carry-forward`,
               categories: {
                 aircraft: [
                   {
@@ -429,7 +429,7 @@ describe('Task 4.4 local smoke tests', () => {
             user: staff,
             body: {
               handoverDate,
-              shift: 'Afternoon',
+              shift: 'Night',
               overallPriority: 'Normal',
               handedToId: supervisor.id,
               generalRemarks: `${runId} target handover`,

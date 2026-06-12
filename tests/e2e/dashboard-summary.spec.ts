@@ -37,7 +37,6 @@ test.describe('Dashboard summary KPIs', () => {
       'Normal',
     ])
     expect(Object.keys(body.today.byShift).sort()).toEqual([
-      'Afternoon',
       'Morning',
       'Night',
     ])

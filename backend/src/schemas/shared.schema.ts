@@ -12,7 +12,7 @@ export const DateOnlyString = z
 
 export const DateTimeString = z.string().datetime({ offset: true })
 
-export const ShiftEnum = z.enum(['Morning', 'Afternoon', 'Night'])
+export const ShiftEnum = z.enum(['Morning', 'Night'])
 export const PriorityEnum = z.enum(['Low', 'Normal', 'High', 'Critical'])
 export const ItemStatusEnum = z.enum(['Open', 'Monitoring', 'Resolved'])
 

@@ -92,7 +92,7 @@ function makeCreateInput(
 ): CreateHandoverInput {
   return {
     handoverDate: '2099-04-23',
-    shift: 'Afternoon',
+    shift: 'Night',
     overallPriority: 'Normal',
     categories: {},
     ...overrides,
@@ -223,7 +223,7 @@ function buildDetailRow(overrides: Record<string, unknown> = {}) {
     id: 'h-1',
     referenceId: 'HDO-2099-000042',
     handoverDate: new Date('2099-04-23T00:00:00Z'),
-    shift: Shift.Afternoon,
+    shift: Shift.Night,
     preparedBy: { id: STAFF_USER.id, name: STAFF_USER.name },
     handedTo: null,
     overallPriority: Priority.Normal,
@@ -394,7 +394,7 @@ describe('handover.service', () => {
       expect(detail.id).toBe('h-1')
       expect(detail.referenceId).toBe('HDO-2099-000042')
       expect(detail.handoverDate).toBe('2099-04-23')
-      expect(detail.shift).toBe(Shift.Afternoon)
+      expect(detail.shift).toBe(Shift.Night)
       expect(detail.categories.aircraft).toEqual([])
     })
 

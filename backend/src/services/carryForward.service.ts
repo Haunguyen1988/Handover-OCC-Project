@@ -62,7 +62,7 @@ export type CarryForwardResult = {
 // Shift helpers
 // ---------------------------------------------------------------------------
 
-const SHIFT_ORDER: Shift[] = [Shift.Morning, Shift.Afternoon, Shift.Night]
+const SHIFT_ORDER: Shift[] = [Shift.Morning, Shift.Night]
 
 export function getPreviousShift(
   date: Date,

@@ -9,7 +9,7 @@
 
 Every handover record MUST have:
 - `handoverDate` - the operational date
-- `shift` - Morning / Afternoon / Night
+- `shift` - Morning / Night
 - `preparedById` - user creating the handover
 - `overallPriority` - Low / Normal / High / Critical
 
@@ -172,6 +172,28 @@ For handovers with `overallPriority = High` or `Critical`, the incoming shift us
 
 **Implementation:** `backend/src/services/acknowledgment.service.ts` - block self-acknowledgment, insert `Acknowledgment`, and set the first `handover.acknowledgedAt`; `backend/src/routes/handovers.ts` - expose the acknowledge endpoint.
 **Test file:** `tests/unit/services/acknowledgment.service.test.ts`
+
+### Stale-acknowledgment surfacing and escalation (ack-alert)
+
+Because acknowledgment can lapse across a shift/day boundary, a High/Critical
+handover left unacknowledged is surfaced in three tiers:
+
+- **Tier 1 — dashboard signal.** `GET /api/v1/dashboard/summary` returns an
+  `ackAlert` object counting every still-unacknowledged High/Critical handover
+  **regardless of date**, with a `severity` of `none` / `warn` / `breach`.
+  Critical unacked ≥ 15 min is `breach`; High unacked ≥ 60 min is `warn`.
+  Thresholds live in `backend/src/services/ackAlert.service.ts`.
+- **Tier 2 — banner.** The dashboard critical banner reads `ackAlert` and shows
+  the oldest waiting age, coloured by severity.
+- **Tier 3 — push escalation.** An in-process scheduler
+  (`backend/src/services/ackAlertScheduler.ts`) sweeps for handovers that have
+  crossed into `breach` and POSTs a generic webhook (Slack/Teams compatible)
+  once per handover. The push is deduped via `Handover.breachAlertedAt`, so each
+  breach escalates at most once; acknowledging the handover removes it from the
+  sweep permanently. Disabled unless `ACK_ALERT_WEBHOOK_URL` is set.
+
+**Implementation:** `backend/src/services/ackAlertNotifier.service.ts` (`findBreachingHandovers`, `runAckAlertSweep`), `backend/src/services/ackAlertScheduler.ts` (`startAckAlertScheduler`).
+**Test files:** `tests/unit/services/ackAlert.service.test.ts`, `tests/unit/services/ackAlertNotifier.service.test.ts`, `tests/unit/services/ackAlertScheduler.test.ts`
 
 ---
 

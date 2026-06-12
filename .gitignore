@@ -17,3 +17,8 @@ next-env.d.ts
 test-results/
 playwright-report/
 playwright/.cache/
+
+# Agent tooling (local, not project code)
+.agents/
+.brain/
+.claude/

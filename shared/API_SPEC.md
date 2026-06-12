@@ -311,7 +311,7 @@ KPI summary for the dashboard.
     "unacknowledgedHighPriority": 1,
     "flightsAffected": 7,
     "byPriority": { "Low": 0, "Normal": 1, "High": 1, "Critical": 1 },
-    "byShift": { "Morning": 1, "Afternoon": 1, "Night": 1 },
+    "byShift": { "Morning": 1, "Night": 1 },
     "abnormalEventsByType": { "AOG": 2, "Diversion": 1 }
   },
   "trend7Days": [
@@ -337,8 +337,8 @@ KPI summary for the dashboard.
     }
   ],
   "shiftComparison7Days": [
-    { "date": "2025-06-09", "Morning": 2, "Afternoon": 3, "Night": 1 },
-    { "date": "2025-06-10", "Morning": 1, "Afternoon": 4, "Night": 0 }
+    { "date": "2025-06-09", "Morning": 2, "Night": 1 },
+    { "date": "2025-06-10", "Morning": 1, "Night": 0 }
   ],
   "openByCategory": {
     "aircraft": 3,
@@ -351,9 +351,39 @@ KPI summary for the dashboard.
   },
   "carriedForwardCount": 5,
   "overdueItems": 2,
-  "itemsDueInNext2Hours": 1
+  "itemsDueInNext2Hours": 1,
+  "ackAlert": {
+    "severity": "breach",
+    "unackedCount": 3,
+    "criticalCount": 2,
+    "highCount": 1,
+    "oldestUnackedMinutes": 245
+  }
 }
 ```
+
+`ackAlert` summarises every still-unacknowledged High/Critical handover
+**regardless of operational date** (unlike `today.unacknowledgedHighPriority`,
+which is scoped to the current day). This keeps a Critical handover that was
+left unacknowledged across a shift boundary visible instead of silently
+dropping off when the day rolls over.
+
+- `severity`: `"none" | "warn" | "breach"` — the more urgent of the Critical
+  and High classifications. Critical unacked ≥ 15 min is `breach`; High unacked
+  ≥ 60 min is `warn`. Thresholds live in `backend/src/services/ackAlert.service.ts`.
+- `unackedCount`: total unacknowledged High + Critical handovers.
+- `criticalCount` / `highCount`: per-priority breakdown.
+- `oldestUnackedMinutes`: age in minutes of the oldest unacknowledged handover.
+
+`ackAlert` is the read side (Tier 1). The same breach signal also drives an
+out-of-band push (Tier 3): a backend scheduler
+(`backend/src/services/ackAlertScheduler.ts`) periodically POSTs a generic
+webhook for each handover that crosses into `breach`, deduped via
+`Handover.breachAlertedAt` so a breach escalates at most once. This is not an
+HTTP endpoint clients call — it is enabled by setting `ACK_ALERT_WEBHOOK_URL`
+(and optionally `ACK_ALERT_SWEEP_INTERVAL_MS`) in the backend environment, and
+is disabled entirely when that variable is unset. See BR-10 for the full
+three-tier description.
 
 ---
 

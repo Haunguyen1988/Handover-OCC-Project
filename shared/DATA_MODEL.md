@@ -23,14 +23,14 @@ definitions.
 | Model | Purpose |
 | --- | --- |
 | `User` | Authenticated identity. Has a nullable `passwordHash` so SSO-only users can exist. Soft-delete uses `isActive=false`, never a hard delete. |
-| `Handover` | One row per shift handover. Owns the seven operational item collections, the audit trail, and acknowledgments. Soft-deleted via `deletedAt`. |
+| `Handover` | One row per shift handover. Owns the seven operational item collections, the audit trail, and acknowledgments. Soft-deleted via `deletedAt`. `breachAlertedAt` dedupes the Tier 3 ack-alert webhook (pushed once per breach). |
 | `AircraftItem` / `AirportItem` / `FlightScheduleItem` / `CrewItem` / `WeatherItem` / `SystemItem` / `AbnormalEvent` | The seven operational categories. Each carries `status`, `priority`, optional `ownerId`, optional `dueTime`, and category-specific fields. Soft-deleted via `deletedAt`; cascade-deleted from their `Handover`. |
 | `AuditLog` | Append-only mutation log. Written for every `CREATED` / `UPDATED` / `STATUS_CHANGED` / `ACKNOWLEDGED` / `CARRIED_FORWARD` / `DELETED` action by `backend/src/services/audit.service.ts`. |
 | `Acknowledgment` | One row per `(handoverId, userId)`. Enforces BR-10 (one ack per user per handover). |
 
 | Enum | Members |
 | --- | --- |
-| `Shift` | `Morning`, `Afternoon`, `Night` |
+| `Shift` | `Morning`, `Night` |
 | `Priority` | `Low`, `Normal`, `High`, `Critical` |
 | `ItemStatus` | `Open`, `Monitoring`, `Resolved` |
 | `UserRole` | `OCC_STAFF`, `SUPERVISOR`, `MANAGEMENT_VIEWER`, `ADMIN` |
@@ -75,11 +75,12 @@ identical messages appear on the client and server.
 | Field | Rule | Enforced by |
 | --- | --- | --- |
 | `Handover.handoverDate` | Required. Cannot be more than 7 days in the past. Cannot be future. | `handover.schema.ts` (BR-01) |
-| `Handover.shift` | Required. One of `Morning` / `Afternoon` / `Night`. | `shared.schema.ts` enum |
+| `Handover.shift` | Required. One of `Morning` / `Night`. | `shared.schema.ts` enum |
 | `Handover.preparedById` | Required. Must reference an active `User`. | `handover.service.ts → ensureActiveUsers` |
 | `User.passwordHash` | Required for credentials-authenticated users. Nullable only for SSO-only users. | `auth-bridge.ts` + admin user-management routes |
 | `Handover.overallPriority` | Required. Defaults to `Normal`. | `handover.schema.ts` |
 | `Handover.referenceId` | Auto-generated. Never user-supplied. | `handover.service.ts → generateReferenceId` (BR-02) |
+| `Handover.breachAlertedAt` | Server-managed, never user-supplied. Set once when the Tier 3 ack-alert sweep pushes a breach webhook for this handover, so each breach is pushed at most once. Stays null until the first successful push. | `ackAlertNotifier.service.ts → runAckAlertSweep` |
 | `Handover.categories.<name>` | If activated, must contain at least one item; cannot be an empty array. | `handover.schema.ts → validateActivatedCategories` (BR-13) |
 | `AbnormalEvent.flightsAffected` | Required if `eventType` is `AOG` or `Diversion`. | `item.schema.ts → AbnormalEventSchema` (BR-08) |
 | `AbnormalEvent.notificationRef` | Required if `priority` is `Critical`. | `item.schema.ts → AbnormalEventSchema` (BR-08) |

@@ -2,6 +2,12 @@ import { ItemStatus, Prisma, Priority, Shift, UserRole } from '@prisma/client'
 
 import { prisma } from '../lib/prisma'
 import type { AuthenticatedUser } from '../middleware/auth.middleware'
+import {
+  classifyAckAlert,
+  DEFAULT_ACK_ALERT_THRESHOLDS,
+  type AckAlertSeverity,
+  type AckAlertThresholds,
+} from './ackAlert.service'
 
 type TodayItemMetricsRow = {
   openItems: number | bigint
@@ -14,6 +20,10 @@ type HandoverDashboardCountsRow = {
   totalHandovers: number | bigint
   unacknowledgedHighPriority: number | bigint
   carriedForwardCount: number | bigint
+  staleUnackedCriticalCount: number | bigint
+  oldestUnackedCriticalMinutes: number | bigint
+  staleUnackedHighCount: number | bigint
+  oldestUnackedHighMinutes: number | bigint
 }
 
 type DashboardAggregateRow = TodayItemMetricsRow & HandoverDashboardCountsRow & {
@@ -121,6 +131,62 @@ function formatDateOnly(value: Date) {
 
 function toCount(value: number | bigint | null | undefined) {
   return Number(value ?? 0)
+}
+
+const ACK_ALERT_SEVERITY_RANK: Record<AckAlertSeverity, number> = {
+  none: 0,
+  warn: 1,
+  breach: 2,
+}
+
+/**
+ * Roll the per-priority stale-unacked counts into a single alert summary.
+ *
+ * Unlike `today.unacknowledgedHighPriority` (scoped to today), this counts
+ * every still-open High/Critical handover regardless of date — a Critical
+ * left unacknowledged across a shift boundary stays visible instead of
+ * silently dropping off when the operational day rolls over. The `severity`
+ * is the more urgent of the Critical and High classifications.
+ */
+function buildAckAlert(
+  row: HandoverDashboardCountsRow | undefined,
+  thresholds: AckAlertThresholds = DEFAULT_ACK_ALERT_THRESHOLDS
+) {
+  const criticalCount = toCount(row?.staleUnackedCriticalCount)
+  const highCount = toCount(row?.staleUnackedHighCount)
+  const oldestCriticalMinutes = toCount(row?.oldestUnackedCriticalMinutes)
+  const oldestHighMinutes = toCount(row?.oldestUnackedHighMinutes)
+
+  const criticalSeverity = criticalCount
+    ? classifyAckAlert(Priority.Critical, oldestCriticalMinutes, thresholds)
+    : 'none'
+  const highSeverity = highCount
+    ? classifyAckAlert(Priority.High, oldestHighMinutes, thresholds)
+    : 'none'
+
+  const severity: AckAlertSeverity =
+    ACK_ALERT_SEVERITY_RANK[criticalSeverity] >=
+    ACK_ALERT_SEVERITY_RANK[highSeverity]
+      ? criticalSeverity
+      : highSeverity
+
+  return {
+    severity,
+    unackedCount: criticalCount + highCount,
+    criticalCount,
+    highCount,
+    oldestUnackedMinutes: Math.max(oldestCriticalMinutes, oldestHighMinutes),
+  }
+}
+
+function emptyAckAlert() {
+  return {
+    severity: 'none' as AckAlertSeverity,
+    unackedCount: 0,
+    criticalCount: 0,
+    highCount: 0,
+    oldestUnackedMinutes: 0,
+  }
 }
 
 function toJsonArray<T>(value: unknown): T[] {
@@ -255,6 +321,44 @@ async function getDashboardAggregates(
           AND h."isCarriedForward" = true
           ${handoverUserScope}
       ) AS "carriedForwardCount",
+      (
+        SELECT COUNT(*)::int
+        FROM "Handover" h
+        WHERE h."deletedAt" IS NULL
+          AND h."overallPriority" = ${sqlPriority(Priority.Critical)}
+          AND h."acknowledgedAt" IS NULL
+          ${handoverUserScope}
+      ) AS "staleUnackedCriticalCount",
+      (
+        SELECT COALESCE(
+          FLOOR(EXTRACT(EPOCH FROM (${now}::timestamptz - MIN(h."createdAt"))) / 60)::int,
+          0
+        )
+        FROM "Handover" h
+        WHERE h."deletedAt" IS NULL
+          AND h."overallPriority" = ${sqlPriority(Priority.Critical)}
+          AND h."acknowledgedAt" IS NULL
+          ${handoverUserScope}
+      ) AS "oldestUnackedCriticalMinutes",
+      (
+        SELECT COUNT(*)::int
+        FROM "Handover" h
+        WHERE h."deletedAt" IS NULL
+          AND h."overallPriority" = ${sqlPriority(Priority.High)}
+          AND h."acknowledgedAt" IS NULL
+          ${handoverUserScope}
+      ) AS "staleUnackedHighCount",
+      (
+        SELECT COALESCE(
+          FLOOR(EXTRACT(EPOCH FROM (${now}::timestamptz - MIN(h."createdAt"))) / 60)::int,
+          0
+        )
+        FROM "Handover" h
+        WHERE h."deletedAt" IS NULL
+          AND h."overallPriority" = ${sqlPriority(Priority.High)}
+          AND h."acknowledgedAt" IS NULL
+          ${handoverUserScope}
+      ) AS "oldestUnackedHighMinutes",
       COUNT(*) FILTER (
         WHERE items."handoverDate" = ${today}
           AND items.status = ${sqlItemStatus(ItemStatus.Open)}
@@ -568,7 +672,6 @@ async function getDashboardAggregates(
   const byShiftRows = toJsonArray<ShiftCountRow>(row?.byShiftRows)
   const byShift: Record<Shift, number> = {
     [Shift.Morning]: 0,
-    [Shift.Afternoon]: 0,
     [Shift.Night]: 0,
   }
   byShiftRows.forEach((entry) => {
@@ -593,6 +696,7 @@ async function getDashboardAggregates(
       totalHandovers: toCount(row?.totalHandovers),
       unacknowledgedHighPriority: toCount(row?.unacknowledgedHighPriority),
       carriedForwardCount: toCount(row?.carriedForwardCount),
+      ackAlert: buildAckAlert(row),
     },
     todayMetrics: {
       openItems: toCount(row?.openItems),
@@ -635,7 +739,6 @@ async function getDashboardAggregates(
       return {
         date: dateKey,
         Morning: counts?.[Shift.Morning] ?? 0,
-        Afternoon: counts?.[Shift.Afternoon] ?? 0,
         Night: counts?.[Shift.Night] ?? 0,
       }
     }),
@@ -678,6 +781,7 @@ function createEmptyItemAggregates(startDate: Date) {
       totalHandovers: 0,
       unacknowledgedHighPriority: 0,
       carriedForwardCount: 0,
+      ackAlert: emptyAckAlert(),
     },
     todayMetrics: {
       openItems: 0,
@@ -693,7 +797,6 @@ function createEmptyItemAggregates(startDate: Date) {
       },
       byShift: {
         [Shift.Morning]: 0,
-        [Shift.Afternoon]: 0,
         [Shift.Night]: 0,
       },
       abnormalEventsByType: {} as Record<string, number>,
@@ -712,7 +815,6 @@ function createEmptyItemAggregates(startDate: Date) {
     shiftComparison7Days: buildEmpty7DaySeries(startDate, (date) => ({
       date,
       Morning: 0,
-      Afternoon: 0,
       Night: 0,
     })),
     openByCategory: emptyOpenByCategory(),
@@ -772,6 +874,7 @@ export async function getDashboardSummary(
     shiftComparison7Days: itemAggregates.shiftComparison7Days,
     openByCategory: itemAggregates.openByCategory,
     carriedForwardCount: itemAggregates.handoverCounts.carriedForwardCount,
+    ackAlert: itemAggregates.handoverCounts.ackAlert,
     overdueItems: itemAggregates.overdueMetrics.overdueItems,
     itemsDueInNext2Hours: itemAggregates.overdueMetrics.itemsDueInNext2Hours,
   }

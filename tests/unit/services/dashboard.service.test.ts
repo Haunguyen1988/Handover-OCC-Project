@@ -42,6 +42,10 @@ describe('dashboard.service', () => {
           monitoringItems: 4,
           resolvedItems: 8,
           criticalItems: 2,
+          staleUnackedCriticalCount: 2,
+          oldestUnackedCriticalMinutes: 45,
+          staleUnackedHighCount: 1,
+          oldestUnackedHighMinutes: 30,
           trendRows: [
             {
               handoverDate: new Date('2026-04-17T00:00:00.000Z'),
@@ -93,7 +97,7 @@ describe('dashboard.service', () => {
             },
             {
               handoverDate: new Date('2026-04-20T00:00:00.000Z'),
-              shift: 'Afternoon',
+              shift: 'Night',
               openCount: 4,
             },
           ],
@@ -112,7 +116,6 @@ describe('dashboard.service', () => {
           ],
           byShiftRows: [
             { shift: 'Morning', count: 1 },
-            { shift: 'Afternoon', count: 1 },
             { shift: 'Night', count: 1 },
           ],
           abnormalEventsByTypeRows: [
@@ -140,7 +143,7 @@ describe('dashboard.service', () => {
         unacknowledgedHighPriority: 1,
         flightsAffected: 7,
         byPriority: { Low: 0, Normal: 1, High: 1, Critical: 1 },
-        byShift: { Morning: 1, Afternoon: 1, Night: 1 },
+        byShift: { Morning: 1, Night: 1 },
         abnormalEventsByType: { AOG: 2, Diversion: 1 },
       },
       trend7Days: [
@@ -206,13 +209,13 @@ describe('dashboard.service', () => {
         },
       ],
       shiftComparison7Days: [
-        { date: '2026-04-17', Morning: 2, Afternoon: 0, Night: 1 },
-        { date: '2026-04-18', Morning: 0, Afternoon: 0, Night: 0 },
-        { date: '2026-04-19', Morning: 0, Afternoon: 0, Night: 0 },
-        { date: '2026-04-20', Morning: 0, Afternoon: 4, Night: 0 },
-        { date: '2026-04-21', Morning: 0, Afternoon: 0, Night: 0 },
-        { date: '2026-04-22', Morning: 0, Afternoon: 0, Night: 0 },
-        { date: '2026-04-23', Morning: 0, Afternoon: 0, Night: 0 },
+        { date: '2026-04-17', Morning: 2, Night: 1 },
+        { date: '2026-04-18', Morning: 0, Night: 0 },
+        { date: '2026-04-19', Morning: 0, Night: 0 },
+        { date: '2026-04-20', Morning: 0, Night: 4 },
+        { date: '2026-04-21', Morning: 0, Night: 0 },
+        { date: '2026-04-22', Morning: 0, Night: 0 },
+        { date: '2026-04-23', Morning: 0, Night: 0 },
       ],
       openByCategory: {
         aircraft: 3,
@@ -224,6 +227,13 @@ describe('dashboard.service', () => {
         abnormalEvents: 0,
       },
       carriedForwardCount: 5,
+      ackAlert: {
+        severity: 'breach',
+        unackedCount: 3,
+        criticalCount: 2,
+        highCount: 1,
+        oldestUnackedMinutes: 45,
+      },
       overdueItems: 2,
       itemsDueInNext2Hours: 4,
     })
@@ -304,7 +314,7 @@ describe('dashboard.service', () => {
       unacknowledgedHighPriority: 0,
       flightsAffected: 0,
       byPriority: { Low: 0, Normal: 0, High: 0, Critical: 0 },
-      byShift: { Morning: 0, Afternoon: 0, Night: 0 },
+      byShift: { Morning: 0, Night: 0 },
       abnormalEventsByType: {},
     })
   })
@@ -326,7 +336,7 @@ describe('dashboard.service', () => {
       unacknowledgedHighPriority: 0,
       flightsAffected: 0,
       byPriority: { Low: 0, Normal: 0, High: 0, Critical: 0 },
-      byShift: { Morning: 0, Afternoon: 0, Night: 0 },
+      byShift: { Morning: 0, Night: 0 },
       abnormalEventsByType: {},
     })
     expect(summary.openByCategory).toEqual({

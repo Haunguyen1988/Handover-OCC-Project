@@ -5,6 +5,7 @@ import { createRateLimitMiddlewareFromEnv } from './middleware/rate-limit.middle
 import { dashboardRouter } from './routes/dashboard.routes'
 import { handoverRouter } from './routes/handovers.routes'
 import { usersRouter } from './routes/users.routes'
+import { startAckAlertScheduler } from './services/ackAlertScheduler'
 
 export function createApp() {
   const app = express()
@@ -36,4 +37,6 @@ if (require.main === module) {
   app.listen(port, () => {
     console.log(`OCC backend listening on http://localhost:${port}`)
   })
+
+  startAckAlertScheduler()
 }

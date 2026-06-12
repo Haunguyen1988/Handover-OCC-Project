@@ -10,7 +10,6 @@ datasource db {
 
 enum Shift {
   Morning
-  Afternoon
   Night
 }
 
@@ -78,6 +77,10 @@ model Handover {
   carriedForwardTo    Handover[]           @relation("CarryForward")
   submittedAt         DateTime?
   acknowledgedAt      DateTime?
+  // Set when a breach push notification has been sent for this handover, so
+  // the ack-alert scheduler pushes each breach once instead of every tick.
+  // Cleared (stays null) until the first successful push.
+  breachAlertedAt     DateTime?
   deletedAt           DateTime?
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt

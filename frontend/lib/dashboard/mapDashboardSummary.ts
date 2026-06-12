@@ -1,4 +1,5 @@
 import type {
+  AckAlert,
   CategoryCode,
   DashboardSummary,
   Priority,
@@ -34,6 +35,7 @@ export interface BackendDashboardSummary {
     abnormalEvents: number
   }
   carriedForwardCount: number
+  ackAlert?: AckAlert
 }
 
 const ZERO_BY_CATEGORY: Record<CategoryCode, number> = {
@@ -55,8 +57,15 @@ const ZERO_BY_PRIORITY: Record<Priority, number> = {
 
 const ZERO_BY_SHIFT: Record<Shift, number> = {
   Morning: 0,
-  Afternoon: 0,
   Night: 0,
+}
+
+const EMPTY_ACK_ALERT: AckAlert = {
+  severity: 'none',
+  unackedCount: 0,
+  criticalCount: 0,
+  highCount: 0,
+  oldestUnackedMinutes: 0,
 }
 
 export const EMPTY_DASHBOARD_SUMMARY: DashboardSummary = {
@@ -71,6 +80,18 @@ export const EMPTY_DASHBOARD_SUMMARY: DashboardSummary = {
   byPriority: { ...ZERO_BY_PRIORITY },
   byShift: { ...ZERO_BY_SHIFT },
   abnormalEventsByType: {},
+  ackAlert: { ...EMPTY_ACK_ALERT },
+}
+
+function pickAckAlert(source: AckAlert | undefined): AckAlert {
+  if (!source) return { ...EMPTY_ACK_ALERT }
+  return {
+    severity: source.severity ?? 'none',
+    unackedCount: source.unackedCount ?? 0,
+    criticalCount: source.criticalCount ?? 0,
+    highCount: source.highCount ?? 0,
+    oldestUnackedMinutes: source.oldestUnackedMinutes ?? 0,
+  }
 }
 
 function pickPriority(
@@ -89,7 +110,6 @@ function pickShift(
 ): Record<Shift, number> {
   return {
     Morning: source?.Morning ?? 0,
-    Afternoon: source?.Afternoon ?? 0,
     Night: source?.Night ?? 0,
   }
 }
@@ -124,5 +144,6 @@ export function mapDashboardSummary(
     byPriority: pickPriority(backend.today.byPriority),
     byShift: pickShift(backend.today.byShift),
     abnormalEventsByType: { ...(backend.today.abnormalEventsByType ?? {}) },
+    ackAlert: pickAckAlert(backend.ackAlert),
   }
 }

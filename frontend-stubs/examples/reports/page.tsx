@@ -44,7 +44,7 @@ export default function ReportsPage() {
       totalHandovers: 0,
       rows: [],
       totals: {
-        byShift: { Morning: 0, Afternoon: 0, Night: 0 },
+        byShift: { Morning: 0, Night: 0 },
         byPriority: { Low: 0, Normal: 0, High: 0, Critical: 0 },
         byStatus: { Open: 0, Monitoring: 0, Resolved: 0 },
       },
@@ -58,7 +58,10 @@ export default function ReportsPage() {
   };
 
   return (
-    <AppShell user={DEMO_USER} unacknowledgedCriticalCount={0}>
+    <AppShell
+      user={DEMO_USER}
+      ackAlert={{ severity: 'none', unackedCount: 0, criticalCount: 0, highCount: 0, oldestUnackedMinutes: 0 }}
+    >
       <div className="flex flex-col gap-5">
         <header className="flex flex-wrap items-baseline justify-between gap-2 print:hidden">
           <div>

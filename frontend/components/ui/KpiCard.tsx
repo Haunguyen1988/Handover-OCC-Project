@@ -5,22 +5,29 @@ import type { ReactNode } from 'react';
 
 export type KpiKind = 'active' | 'alert' | 'issues' | 'opsImpact' | 'trace' | 'ok';
 
-const KIND_CLASSES: Record<KpiKind, string> = {
-  active: 'bg-priority-low-bg text-priority-low-fg',
-  alert: 'bg-priority-high-bg text-priority-high-fg',
-  issues: 'bg-priority-normal-bg text-priority-normal-fg',
-  opsImpact: 'bg-priority-critical-bg text-priority-critical-fg',
-  trace: 'bg-status-monitoring-bg text-priority-normal-fg',
-  ok: 'bg-status-resolved-bg text-priority-low-fg',
+/**
+ * Each kind maps to a single semantic accent. We deliberately render color
+ * only as a small status dot + the value tint on emphasis kinds — never a
+ * loud filled badge — to keep the grid quiet and editorial. The dot color
+ * resolves to the same design tokens the rest of the app uses, so dark mode
+ * is handled for free.
+ */
+const KIND_DOT: Record<KpiKind, string> = {
+  active: 'bg-priority-low-fg',
+  alert: 'bg-priority-high-fg',
+  issues: 'bg-priority-normal-fg',
+  opsImpact: 'bg-priority-critical-fg',
+  trace: 'bg-status-monitoring',
+  ok: 'bg-status-resolved',
 };
 
-const KIND_LABEL: Record<KpiKind, string> = {
-  active: 'Active',
-  alert: 'Alert',
-  issues: 'Issues',
-  opsImpact: 'Ops Impact',
-  trace: 'Trace',
-  ok: 'OK',
+/**
+ * Attention-demanding kinds tint the value itself with their semantic color
+ * (matching the dot) so a glance reads severity without a loud badge.
+ */
+const KIND_VALUE_TINT: Partial<Record<KpiKind, string>> = {
+  alert: 'text-priority-high-fg',
+  opsImpact: 'text-priority-critical-fg',
 };
 
 export interface KpiCardProps {
@@ -44,18 +51,26 @@ export function KpiCard({ label, value, hint, kind = 'active', onClick, classNam
       type={onClick ? 'button' : undefined}
       onClick={onClick}
       className={cn(
-        'flex w-full flex-col gap-2 rounded-md border border-line bg-bg-elev p-4 text-left shadow-soft transition',
-        onClick && 'hover:border-accent hover:shadow-elev focus-visible:border-accent',
+        'group flex w-full flex-col gap-3 rounded-md border border-line bg-bg-elev p-5 text-left transition-all duration-200 ease-ease',
+        onClick &&
+          'hover:-translate-y-0.5 hover:border-line-soft hover:shadow-elev focus-visible:border-accent focus-visible:outline-none',
         className
       )}
     >
-      <div className="flex items-start justify-between gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wide text-fg-mute">{label}</span>
-        <span className={cn('rounded-pill px-2 py-0.5 text-[10px] font-bold uppercase', KIND_CLASSES[kind])}>
-          {KIND_LABEL[kind]}
+      <div className="flex items-center gap-2">
+        <span className={cn('h-1.5 w-1.5 shrink-0 rounded-pill', KIND_DOT[kind])} aria-hidden="true" />
+        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-fg-mute">
+          {label}
         </span>
       </div>
-      <div className="text-3xl font-bold leading-tight text-fg">{value}</div>
+      <div
+        className={cn(
+          'text-4xl font-semibold leading-none tracking-tight tabular-nums',
+          KIND_VALUE_TINT[kind] ?? 'text-fg'
+        )}
+      >
+        {value}
+      </div>
       {hint && <div className="text-xs text-fg-mute">{hint}</div>}
     </Tag>
   );

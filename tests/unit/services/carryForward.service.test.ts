@@ -162,19 +162,11 @@ describe('carryForward.service', () => {
   // -------------------------------------------------------------------------
 
   describe('getPreviousShift', () => {
-    it('returns Morning shift of same day when current is Afternoon', () => {
-      const date = new Date('2026-04-23T00:00:00Z')
-      const result = getPreviousShift(date, Shift.Afternoon)
-
-      expect(result.shift).toBe(Shift.Morning)
-      expect(result.date).toBe(date)
-    })
-
-    it('returns Afternoon shift of same day when current is Night', () => {
+    it('returns Morning shift of same day when current is Night', () => {
       const date = new Date('2026-04-23T00:00:00Z')
       const result = getPreviousShift(date, Shift.Night)
 
-      expect(result.shift).toBe(Shift.Afternoon)
+      expect(result.shift).toBe(Shift.Morning)
       expect(result.date).toBe(date)
     })
 
@@ -528,7 +520,7 @@ describe('carryForward.service', () => {
       const result = await autoCarryForward(
         'new-handover-id',
         new Date('2026-04-23T00:00:00Z'),
-        Shift.Afternoon,
+        Shift.Night,
         'user-1'
       )
 

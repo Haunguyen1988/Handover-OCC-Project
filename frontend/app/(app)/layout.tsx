@@ -1,14 +1,30 @@
 import { redirect } from 'next/navigation'
 
-import { auth, signOut } from '@/auth'
+import { auth } from '@/auth'
 import { AppShell } from '@/components/layout/AppShell'
-import type { UserRole, UserSummary } from '@/lib/types'
+import { backendFetch } from '@/lib/server/api-client'
+import {
+  EMPTY_DASHBOARD_SUMMARY,
+  type BackendDashboardSummary,
+} from '@/lib/dashboard/mapDashboardSummary'
+import type { AckAlert, UserRole, UserSummary } from '@/lib/types'
 
 import { Providers } from './Providers'
 
-async function handleSignOut() {
-  'use server'
-  await signOut({ redirectTo: '/signin' })
+/**
+ * Fetch just the stale-unacked High/Critical summary for the persistent
+ * banner. Guarded so a backend hiccup degrades to a hidden banner instead
+ * of crashing the whole app shell.
+ */
+async function loadAckAlert(): Promise<AckAlert> {
+  try {
+    const summary = await backendFetch<BackendDashboardSummary>(
+      '/api/v1/dashboard/summary',
+    )
+    return summary.ackAlert ?? EMPTY_DASHBOARD_SUMMARY.ackAlert
+  } catch {
+    return EMPTY_DASHBOARD_SUMMARY.ackAlert
+  }
 }
 
 export default async function AppLayout({
@@ -29,13 +45,11 @@ export default async function AppLayout({
     role: session.user.role as UserRole,
   }
 
+  const ackAlert = await loadAckAlert()
+
   return (
     <Providers>
-      <AppShell
-        user={user}
-        unacknowledgedCriticalCount={0}
-        onSignOut={handleSignOut}
-      >
+      <AppShell user={user} ackAlert={ackAlert}>
         {children}
       </AppShell>
     </Providers>

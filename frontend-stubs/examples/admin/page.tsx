@@ -96,7 +96,10 @@ export default function AdminUsersPage({ initialUsers }: { initialUsers: UserDet
 
   if (!can(DEMO_USER.role, 'manageUsers')) {
     return (
-      <AppShell user={DEMO_USER} unacknowledgedCriticalCount={0}>
+      <AppShell
+        user={DEMO_USER}
+        ackAlert={{ severity: 'none', unackedCount: 0, criticalCount: 0, highCount: 0, oldestUnackedMinutes: 0 }}
+      >
         <div className="rounded-md border border-line bg-bg-elev p-6 text-fg-soft">
           You do not have permission to manage users.
         </div>
@@ -105,7 +108,10 @@ export default function AdminUsersPage({ initialUsers }: { initialUsers: UserDet
   }
 
   return (
-    <AppShell user={DEMO_USER} unacknowledgedCriticalCount={0}>
+    <AppShell
+      user={DEMO_USER}
+      ackAlert={{ severity: 'none', unackedCount: 0, criticalCount: 0, highCount: 0, oldestUnackedMinutes: 0 }}
+    >
       <div className="flex flex-col gap-5">
         <header className="flex flex-wrap items-baseline justify-between gap-2">
           <div>

@@ -58,8 +58,11 @@ export function HandoverFilters({
       carryForward: false,
     });
 
+  const selectClass =
+    'min-w-[140px] rounded-md border border-line bg-bg-elev px-3 py-2 text-sm text-fg-soft transition-colors duration-150 ease-ease hover:border-line-soft focus:border-accent focus:outline-none';
+
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
         {chips.map((chip) => (
           <FilterChip
@@ -72,33 +75,43 @@ export function HandoverFilters({
         ))}
       </div>
 
-      <div className="flex flex-wrap items-end gap-2">
-        <label className="flex flex-1 min-w-[200px] flex-col text-xs text-fg-mute">
+      <div className="flex flex-wrap items-center gap-2">
+        <label className="relative flex flex-1 min-w-[220px] items-center">
           <span className="sr-only">Search</span>
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 16 16"
+            className="pointer-events-none absolute left-3 h-4 w-4 text-fg-faint"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+          >
+            <circle cx="7" cy="7" r="4.5" />
+            <path d="m11 11 3 3" strokeLinecap="round" />
+          </svg>
           <input
             type="search"
             placeholder={t('topbar.search')}
             value={value.search}
             onChange={(e) => update('search', e.target.value)}
-            className="rounded-md border border-line bg-bg-elev px-3 py-1.5 text-sm text-fg placeholder:text-fg-faint focus:border-accent focus:outline-none"
+            className="w-full rounded-md border border-line bg-bg-elev py-2 pl-9 pr-3 text-sm text-fg placeholder:text-fg-faint transition-colors duration-150 ease-ease hover:border-line-soft focus:border-accent focus:outline-none"
           />
         </label>
 
         <select
           value={value.shift}
           onChange={(e) => update('shift', e.target.value as HandoverFiltersValue['shift'])}
-          className="min-w-[140px] rounded-md border border-line bg-bg-elev px-2 py-1.5 text-sm"
+          className={selectClass}
         >
           <option value="All">All shifts</option>
           <option value="Morning">Morning</option>
-          <option value="Afternoon">Afternoon</option>
           <option value="Night">Night</option>
         </select>
 
         <select
           value={value.priority}
           onChange={(e) => update('priority', e.target.value as HandoverFiltersValue['priority'])}
-          className="min-w-[140px] rounded-md border border-line bg-bg-elev px-2 py-1.5 text-sm"
+          className={selectClass}
         >
           <option value="All">All priorities</option>
           <option value="Critical">Critical</option>
@@ -110,28 +123,32 @@ export function HandoverFilters({
         <select
           value={value.status}
           onChange={(e) => update('status', e.target.value as HandoverFiltersValue['status'])}
-          className="min-w-[140px] rounded-md border border-line bg-bg-elev px-2 py-1.5 text-sm"
+          className={selectClass}
         >
           <option value="All">All statuses</option>
           <option value="Open">Open</option>
           <option value="Monitoring">Monitoring</option>
           <option value="Resolved">Resolved</option>
         </select>
+      </div>
 
-        <label className="inline-flex items-center gap-1 text-sm text-fg-soft">
+      <div className="flex flex-wrap items-center gap-4">
+        <label className="inline-flex items-center gap-2 text-sm text-fg-soft">
           <input
             type="checkbox"
             checked={value.unack}
             onChange={(e) => update('unack', e.target.checked)}
+            className="accent-accent"
           />
           Awaiting ack
         </label>
 
-        <label className="inline-flex items-center gap-1 text-sm text-fg-soft">
+        <label className="inline-flex items-center gap-2 text-sm text-fg-soft">
           <input
             type="checkbox"
             checked={value.carryForward}
             onChange={(e) => update('carryForward', e.target.checked)}
+            className="accent-accent"
           />
           Carry-forward
         </label>
@@ -139,7 +156,7 @@ export function HandoverFilters({
         <button
           type="button"
           onClick={clear}
-          className="ml-auto rounded-md border border-line px-3 py-1.5 text-xs text-fg-soft hover:border-accent hover:text-accent"
+          className="ml-auto rounded-md px-3 py-1.5 text-xs font-medium text-fg-mute transition-colors duration-150 ease-ease hover:text-accent"
         >
           {t('log.clearFilters')}
         </button>

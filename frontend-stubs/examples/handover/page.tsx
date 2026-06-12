@@ -41,7 +41,11 @@ export default function HandoverDetailPage({ user, handover, audit, acknowledge 
   return (
     <AppShell
       user={user}
-      unacknowledgedCriticalCount={handover.acknowledgedAt ? 0 : 1}
+      ackAlert={
+        handover.acknowledgedAt
+          ? { severity: 'none', unackedCount: 0, criticalCount: 0, highCount: 0, oldestUnackedMinutes: 0 }
+          : { severity: 'breach', unackedCount: 1, criticalCount: 1, highCount: 0, oldestUnackedMinutes: 245 }
+      }
       shiftOverride={handover.shift}
     >
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">

@@ -565,7 +565,7 @@ async function main() {
       ),
       nextShiftActions: taggedText(
         'SCENARIO 1',
-        'Create the Afternoon handover in the app to verify automatic carry-forward from this Morning shift.'
+        'Create the Night handover in the app to verify automatic carry-forward from this Morning shift.'
       ),
       aircraftItems: {
         create: [
@@ -605,7 +605,7 @@ async function main() {
       handoverDate: formatDateOnly(scenario1.handoverDate),
       shift: scenario1.shift,
       preparedBy: users.staff.email,
-      note: 'Morning shift today; keep today Afternoon open for live carry-forward creation.',
+      note: 'Morning shift today; keep today Night open for live carry-forward creation.',
     })
 
     const scenario2 = await createScenarioHandover(tx, users.staff.id, {
@@ -686,11 +686,11 @@ async function main() {
       note: 'Night shift yesterday; unacknowledged High priority handover with carried-forward item badges.',
     })
 
-    // Keep today Afternoon available so Scenario 1 can create it live via the app.
+    // Keep today Night available so Scenario 1 can create it live via the app.
     const scenario3 = await createScenarioHandover(tx, users.admin.id, {
       referenceId: scenario3Ref,
-      handoverDate: yesterday,
-      shift: Shift.Afternoon,
+      handoverDate: twoDaysAgo,
+      shift: Shift.Night,
       preparedBy: { connect: { id: users.admin.id } },
       handedTo: { connect: { id: users.supervisor.id } },
       overallPriority: Priority.Critical,
@@ -738,7 +738,7 @@ async function main() {
       handoverDate: formatDateOnly(scenario3.handoverDate),
       shift: scenario3.shift,
       preparedBy: users.admin.email,
-      note: 'Placed on yesterday Afternoon so today Afternoon remains free for Scenario 1 carry-forward testing.',
+      note: 'Placed two operational days ago so today Night remains free for Scenario 1 carry-forward testing.',
     })
 
     const scenario4 = await createScenarioHandover(tx, users.supervisor.id, {

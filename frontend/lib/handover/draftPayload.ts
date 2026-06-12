@@ -18,7 +18,7 @@ import type { CategoryCode } from '@/lib/types'
  */
 export interface CreateHandoverPayload {
   handoverDate: string
-  shift: 'Morning' | 'Afternoon' | 'Night'
+  shift: 'Morning' | 'Night'
   overallPriority: 'Low' | 'Normal' | 'High' | 'Critical'
   handedToId?: string
   generalRemarks?: string

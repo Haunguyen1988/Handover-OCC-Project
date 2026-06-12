@@ -23,7 +23,7 @@ function buildBackend(
       unacknowledgedHighPriority: 1,
       flightsAffected: 7,
       byPriority: { Low: 0, Normal: 1, High: 1, Critical: 1 },
-      byShift: { Morning: 1, Afternoon: 1, Night: 1 },
+      byShift: { Morning: 1, Night: 1 },
       abnormalEventsByType: { AOG: 2, Diversion: 1 },
       ...overrides,
     },
@@ -38,6 +38,13 @@ function buildBackend(
       ...openByCategoryOverrides,
     },
     carriedForwardCount: 5,
+    ackAlert: {
+      severity: 'breach',
+      unackedCount: 3,
+      criticalCount: 2,
+      highCount: 1,
+      oldestUnackedMinutes: 245,
+    },
     ...rest,
   }
 }
@@ -68,8 +75,30 @@ describe('mapDashboardSummary', () => {
       High: 1,
       Critical: 1,
     })
-    expect(summary.byShift).toEqual({ Morning: 1, Afternoon: 1, Night: 1 })
+    expect(summary.byShift).toEqual({ Morning: 1, Night: 1 })
     expect(summary.abnormalEventsByType).toEqual({ AOG: 2, Diversion: 1 })
+    expect(summary.ackAlert).toEqual({
+      severity: 'breach',
+      unackedCount: 3,
+      criticalCount: 2,
+      highCount: 1,
+      oldestUnackedMinutes: 245,
+    })
+  })
+
+  it('falls back to a none-severity ackAlert when the backend omits it', () => {
+    const backend = buildBackend()
+    delete (backend as { ackAlert?: unknown }).ackAlert
+
+    const summary = mapDashboardSummary(backend)
+
+    expect(summary.ackAlert).toEqual({
+      severity: 'none',
+      unackedCount: 0,
+      criticalCount: 0,
+      highCount: 0,
+      oldestUnackedMinutes: 0,
+    })
   })
 
   it('zero-fills missing priority/shift buckets while preserving extra abnormal types', () => {
@@ -84,7 +113,7 @@ describe('mapDashboardSummary', () => {
     )
 
     expect(summary.byPriority).toEqual({ Low: 0, Normal: 0, High: 4, Critical: 0 })
-    expect(summary.byShift).toEqual({ Morning: 0, Afternoon: 0, Night: 2 })
+    expect(summary.byShift).toEqual({ Morning: 0, Night: 2 })
     expect(summary.abnormalEventsByType).toEqual({
       'Bird Strike': 1,
       AOG: 5,
@@ -101,7 +130,6 @@ describe('mapDashboardSummary', () => {
     })
     expect(EMPTY_DASHBOARD_SUMMARY.byShift).toEqual({
       Morning: 0,
-      Afternoon: 0,
       Night: 0,
     })
     expect(EMPTY_DASHBOARD_SUMMARY.abnormalEventsByType).toEqual({})
@@ -113,6 +141,13 @@ describe('mapDashboardSummary', () => {
       weather: 0,
       system: 0,
       abnormal: 0,
+    })
+    expect(EMPTY_DASHBOARD_SUMMARY.ackAlert).toEqual({
+      severity: 'none',
+      unackedCount: 0,
+      criticalCount: 0,
+      highCount: 0,
+      oldestUnackedMinutes: 0,
     })
   })
 })

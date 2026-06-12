@@ -1,7 +1,8 @@
 'use client';
 
-import { useMemo, useRef, type ReactNode } from 'react';
+import { useCallback, useMemo, useRef, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import { signOut } from 'next-auth/react';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 import { CriticalBanner } from './CriticalBanner';
@@ -13,18 +14,19 @@ import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { CommandPaletteProvider, useCommandPalette, useRegisterCommands } from '../../hooks/useCommandPalette';
 import { CommandPalette } from '../cmdk/CommandPalette';
 import { ShortcutsOverlay } from '../cmdk/ShortcutsOverlay';
-import { buildDefaultCommands } from '../../lib/commands';
-import type { Shift, ThemeMode, UserSummary } from '../../lib/types';
+import { buildDefaultCommands, type Command } from '../../lib/commands';
+import type { AckAlert, Shift, ThemeMode, UserSummary } from '../../lib/types';
+
+const EMPTY_COMMANDS: ReadonlyArray<Command> = [];
 
 export interface AppShellProps {
   user: UserSummary | null;
-  /** Number of unacknowledged Critical handovers; banner hides when 0. */
-  unacknowledgedCriticalCount: number;
+  /** Stale unacknowledged High/Critical summary; banner hides when severity is 'none'. */
+  ackAlert: AckAlert;
   /** Force the shift accent (e.g. from the active handover). */
   shiftOverride?: Shift | null;
   initialTheme?: ThemeMode;
   recordCount?: number;
-  onSignOut?: () => void;
   children: ReactNode;
 }
 
@@ -35,29 +37,32 @@ export interface AppShellProps {
  */
 export function AppShell({
   user,
-  unacknowledgedCriticalCount,
+  ackAlert,
   shiftOverride,
   initialTheme,
   recordCount,
-  onSignOut,
   children,
 }: AppShellProps) {
   const { t } = useI18n();
   const searchRef = useRef<HTMLInputElement>(null);
   useShiftTheme(shiftOverride ?? null);
 
+  const handleSignOut = useCallback(() => {
+    signOut({ callbackUrl: '/signin' });
+  }, []);
+
   return (
-    <CommandPaletteProvider defaultCommands={[]}>
+    <CommandPaletteProvider defaultCommands={EMPTY_COMMANDS}>
       <CommandPaletteWiring
         searchRef={searchRef}
-        onSignOut={onSignOut}
+        onSignOut={handleSignOut}
         initialTheme={initialTheme}
       />
       <div className="grid min-h-screen grid-cols-[15rem_1fr]" data-i18n-loaded={t !== undefined ? '1' : '0'}>
-        <Sidebar recordCount={recordCount} signOut={onSignOut} />
+        <Sidebar recordCount={recordCount} signOut={handleSignOut} />
         <div className="flex min-h-screen flex-col">
-          <TopBar user={user} initialTheme={initialTheme} onSignOut={onSignOut} searchInputRef={searchRef} />
-          <CriticalBanner count={unacknowledgedCriticalCount} />
+          <TopBar user={user} initialTheme={initialTheme} onSignOut={handleSignOut} searchInputRef={searchRef} />
+          <CriticalBanner ackAlert={ackAlert} />
           <main className="flex-1 overflow-y-auto px-6 py-6">
             {children}
           </main>

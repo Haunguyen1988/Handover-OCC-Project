@@ -187,7 +187,7 @@ for real data fetching.
 | Shift-aware accent (morning/afternoon/night)        | `useShiftTheme` + `bg-shift` / `text-shift-fg`      |
 | Light/dark toggle (T)                               | `useTheme` + `data-theme="dark"` selector           |
 | EN/VI toggle                                        | `useI18n` + `<I18nProvider>`                        |
-| Critical-unack banner                               | `<CriticalBanner count={…}>`                        |
+| Critical-unack banner                               | `<CriticalBanner ackAlert={…}>`                     |
 | KPI cards w/ deep-link to log                       | `<DashboardKpis summary={…}>`                       |
 | Smart filter chips                                  | `<FilterChip>` + `<HandoverFilters>`                |
 | Carry-forward visual (left border + back-link card) | `border-l-shift` row + `<CarryForwardLink>`         |

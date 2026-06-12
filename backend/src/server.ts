@@ -5,6 +5,7 @@ import { createRateLimitMiddlewareFromEnv } from './middleware/rate-limit.middle
 import { dashboardRouter } from './routes/dashboard.routes'
 import { handoverRouter } from './routes/handovers.routes'
 import { usersRouter } from './routes/users.routes'
+import { startAckAlertScheduler } from './services/ackAlertScheduler'
 
 export function createApp() {
   const app = express()
@@ -36,4 +37,16 @@ if (require.main === module) {
   app.listen(port, () => {
     console.log(`OCC backend listening on http://localhost:${port}`)
   })
+
+  // Tier 3 ack-alert push. Logs whether it armed so a misconfigured env
+  // (missing ACK_ALERT_WEBHOOK_URL) is visible in the boot log instead of
+  // silently never pushing.
+  const ackAlertStop = startAckAlertScheduler()
+  if (ackAlertStop) {
+    console.log('[ack-alert] breach webhook scheduler started')
+  } else {
+    console.log(
+      '[ack-alert] breach webhook scheduler disabled (set ACK_ALERT_WEBHOOK_URL to enable)'
+    )
+  }
 }

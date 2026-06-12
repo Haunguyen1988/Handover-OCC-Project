@@ -23,6 +23,6 @@ export const PRIORITY_ORDER: Record<Priority, number> = {
   Low: 3,
 };
 
-export const SHIFT_ORDER: readonly Shift[] = ['Morning', 'Afternoon', 'Night'];
+export const SHIFT_ORDER: readonly Shift[] = ['Morning', 'Night'];
 
 export const PRIORITY_CHOICES: readonly Priority[] = ['Low', 'Normal', 'High', 'Critical'];

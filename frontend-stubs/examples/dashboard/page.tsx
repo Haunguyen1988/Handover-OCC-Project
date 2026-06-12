@@ -27,8 +27,15 @@ async function getDashboardSummary(): Promise<DashboardSummary> {
     aircraftIssues: 3,
     byCategory: { aircraft: 3, airport: 2, flightSchedule: 4, crew: 2, weather: 1, system: 2, abnormal: 1 },
     byPriority: { Low: 1, Normal: 1, High: 3, Critical: 1 },
-    byShift: { Morning: 2, Afternoon: 2, Night: 2 },
+    byShift: { Morning: 2, Night: 2 },
     abnormalEventsByType: { AOG: 1, Diversion: 0 },
+    ackAlert: {
+      severity: 'breach',
+      unackedCount: 1,
+      criticalCount: 1,
+      highCount: 0,
+      oldestUnackedMinutes: 245,
+    },
   };
 }
 async function getRecentHandovers(): Promise<HandoverListRow[]> {
@@ -45,7 +52,7 @@ export default async function DashboardPage() {
   return (
     <AppShell
       user={user}
-      unacknowledgedCriticalCount={summary.awaitingAcknowledgment}
+      ackAlert={summary.ackAlert}
       recordCount={summary.totalHandovers}
     >
       <div className="flex flex-col gap-6">

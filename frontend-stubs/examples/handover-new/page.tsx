@@ -28,7 +28,10 @@ async function submitDraft(_draft: HandoverDraft) {
 
 export default function NewHandoverPage() {
   return (
-    <AppShell user={DEMO_USER} unacknowledgedCriticalCount={0}>
+    <AppShell
+      user={DEMO_USER}
+      ackAlert={{ severity: 'none', unackedCount: 0, criticalCount: 0, highCount: 0, oldestUnackedMinutes: 0 }}
+    >
       <HandoverWizard recipients={RECIPIENTS} submitDraft={submitDraft} />
     </AppShell>
   );

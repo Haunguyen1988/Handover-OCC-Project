@@ -11,7 +11,6 @@ import type { HandoverListRow } from '../../lib/types';
 
 const SHIFT_LABEL: Record<HandoverListRow['shift'], string> = {
   Morning: 'Morning',
-  Afternoon: 'Afternoon',
   Night: 'Night',
 };
 
@@ -31,8 +30,8 @@ export function HandoverRow({ handover, categories = [] }: HandoverRowProps) {
     <Link
       href={`/handover/${handover.id}`}
       className={cn(
-        'grid grid-cols-[10rem_10rem_minmax(0,1fr)_8rem_5rem_5rem_3rem_2rem] items-center gap-3 rounded-md border border-line bg-bg-elev px-3 py-2 text-sm transition hover:border-accent',
-        handover.isCarriedForward && 'border-l-4 border-l-shift'
+        'grid grid-cols-[10rem_10rem_minmax(0,1fr)_8rem_5rem_5rem_3rem_2rem] items-center gap-3 px-4 py-3 text-sm transition-colors duration-150 ease-ease hover:bg-bg-row focus-visible:bg-bg-row focus-visible:outline-none',
+        handover.isCarriedForward && 'border-l-2 border-l-shift'
       )}
     >
       <div className="leading-tight">

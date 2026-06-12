@@ -31,7 +31,11 @@ export default function LogPage({ rows }: { rows: HandoverListRow[] }) {
   const [quick, setQuick] = useState<QuickFilter>('all');
 
   return (
-    <AppShell user={DEMO_USER} unacknowledgedCriticalCount={1} recordCount={rows.length}>
+    <AppShell
+      user={DEMO_USER}
+      ackAlert={{ severity: 'breach', unackedCount: 1, criticalCount: 1, highCount: 0, oldestUnackedMinutes: 245 }}
+      recordCount={rows.length}
+    >
       <div className="flex flex-col gap-6">
         <header>
           <h1 className="text-2xl font-bold text-fg">Handover Log</h1>

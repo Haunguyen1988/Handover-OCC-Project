@@ -1,6 +1,7 @@
 import Link from 'next/link'
 
 import { DashboardKpis } from '@/components/dashboard/DashboardKpis'
+import { DashboardBreakdown } from '@/components/dashboard/DashboardBreakdown'
 import { HandoverTable } from '@/components/handover/HandoverTable'
 import { backendFetch, BackendApiError } from '@/lib/server/api-client'
 import {
@@ -41,10 +42,12 @@ export default async function DashboardPage() {
   const { summary, handovers, error } = await loadDashboard()
 
   return (
-    <div className="flex flex-col gap-6">
-      <header>
-        <h1 className="text-2xl font-bold text-fg">Dashboard</h1>
-        <p className="text-sm text-fg-mute">Active operational overview</p>
+    <div className="mx-auto flex w-full max-w-content flex-col gap-10">
+      <header className="flex flex-col gap-1">
+        <span className="text-[11px] font-medium uppercase tracking-[0.12em] text-fg-mute">
+          Operations
+        </span>
+        <h1 className="text-3xl font-semibold tracking-tight text-fg">Dashboard</h1>
       </header>
       {error && (
         <div className="rounded-md border border-priority-high bg-priority-high-bg px-3 py-2 text-sm text-priority-high-fg">
@@ -54,10 +57,20 @@ export default async function DashboardPage() {
         </div>
       )}
       <DashboardKpis summary={summary} />
-      <section>
-        <header className="mb-2 flex items-baseline justify-between">
-          <h2 className="text-lg font-semibold text-fg">Recent handovers</h2>
-          <Link href="/log" className="text-sm text-accent hover:underline">
+      <DashboardBreakdown
+        byPriority={summary.byPriority}
+        byShift={summary.byShift}
+        abnormalEventsByType={summary.abnormalEventsByType}
+      />
+      <section className="flex flex-col gap-4">
+        <header className="flex items-baseline justify-between border-b border-line-soft pb-3">
+          <h2 className="text-sm font-medium uppercase tracking-[0.08em] text-fg-mute">
+            Recent handovers
+          </h2>
+          <Link
+            href="/log"
+            className="text-xs font-medium text-accent transition-opacity hover:opacity-70"
+          >
             View all →
           </Link>
         </header>

@@ -14,13 +14,15 @@ import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { CommandPaletteProvider, useCommandPalette, useRegisterCommands } from '../../hooks/useCommandPalette';
 import { CommandPalette } from '../cmdk/CommandPalette';
 import { ShortcutsOverlay } from '../cmdk/ShortcutsOverlay';
-import { buildDefaultCommands } from '../../lib/commands';
-import type { Shift, ThemeMode, UserSummary } from '../../lib/types';
+import { buildDefaultCommands, type Command } from '../../lib/commands';
+import type { AckAlert, Shift, ThemeMode, UserSummary } from '../../lib/types';
+
+const EMPTY_COMMANDS: ReadonlyArray<Command> = [];
 
 export interface AppShellProps {
   user: UserSummary | null;
-  /** Number of unacknowledged Critical handovers; banner hides when 0. */
-  unacknowledgedCriticalCount: number;
+  /** Stale unacknowledged High/Critical summary; banner hides when severity is 'none'. */
+  ackAlert: AckAlert;
   /** Force the shift accent (e.g. from the active handover). */
   shiftOverride?: Shift | null;
   initialTheme?: ThemeMode;
@@ -35,7 +37,7 @@ export interface AppShellProps {
  */
 export function AppShell({
   user,
-  unacknowledgedCriticalCount,
+  ackAlert,
   shiftOverride,
   initialTheme,
   recordCount,
@@ -49,8 +51,6 @@ export function AppShell({
     signOut({ callbackUrl: '/signin' });
   }, []);
 
-const EMPTY_COMMANDS: ReadonlyArray<Command> = [];
-
   return (
     <CommandPaletteProvider defaultCommands={EMPTY_COMMANDS}>
       <CommandPaletteWiring
@@ -62,7 +62,7 @@ const EMPTY_COMMANDS: ReadonlyArray<Command> = [];
         <Sidebar recordCount={recordCount} signOut={handleSignOut} />
         <div className="flex min-h-screen flex-col">
           <TopBar user={user} initialTheme={initialTheme} onSignOut={handleSignOut} searchInputRef={searchRef} />
-          <CriticalBanner count={unacknowledgedCriticalCount} />
+          <CriticalBanner ackAlert={ackAlert} />
           <main className="flex-1 overflow-y-auto px-6 py-6">
             {children}
           </main>

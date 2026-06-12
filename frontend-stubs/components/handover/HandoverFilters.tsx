@@ -91,7 +91,6 @@ export function HandoverFilters({
         >
           <option value="All">All shifts</option>
           <option value="Morning">Morning</option>
-          <option value="Afternoon">Afternoon</option>
           <option value="Night">Night</option>
         </select>
 

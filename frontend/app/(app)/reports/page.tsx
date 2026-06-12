@@ -34,7 +34,7 @@ function reportFiltersToQuery(filters: ReportFiltersValue): string {
 }
 
 function tallyTotals(rows: HandoverListResponse['data']) {
-  const byShift: Record<Shift, number> = { Morning: 0, Afternoon: 0, Night: 0 }
+  const byShift: Record<Shift, number> = { Morning: 0, Night: 0 }
   const byPriority: Record<Priority, number> = {
     Low: 0,
     Normal: 0,

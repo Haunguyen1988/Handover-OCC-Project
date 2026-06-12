@@ -14,12 +14,12 @@ import { CommandPaletteProvider, useCommandPalette, useRegisterCommands } from '
 import { CommandPalette } from '../cmdk/CommandPalette';
 import { ShortcutsOverlay } from '../cmdk/ShortcutsOverlay';
 import { buildDefaultCommands } from '../../lib/commands';
-import type { Shift, ThemeMode, UserSummary } from '../../lib/types';
+import type { AckAlert, Shift, ThemeMode, UserSummary } from '../../lib/types';
 
 export interface AppShellProps {
   user: UserSummary | null;
-  /** Number of unacknowledged Critical handovers; banner hides when 0. */
-  unacknowledgedCriticalCount: number;
+  /** Stale unacknowledged High/Critical summary; banner hides when severity is 'none'. */
+  ackAlert: AckAlert;
   /** Force the shift accent (e.g. from the active handover). */
   shiftOverride?: Shift | null;
   initialTheme?: ThemeMode;
@@ -35,7 +35,7 @@ export interface AppShellProps {
  */
 export function AppShell({
   user,
-  unacknowledgedCriticalCount,
+  ackAlert,
   shiftOverride,
   initialTheme,
   recordCount,
@@ -57,7 +57,7 @@ export function AppShell({
         <Sidebar recordCount={recordCount} signOut={onSignOut} />
         <div className="flex min-h-screen flex-col">
           <TopBar user={user} initialTheme={initialTheme} onSignOut={onSignOut} searchInputRef={searchRef} />
-          <CriticalBanner count={unacknowledgedCriticalCount} />
+          <CriticalBanner ackAlert={ackAlert} />
           <main className="flex-1 overflow-y-auto px-6 py-6">
             {children}
           </main>

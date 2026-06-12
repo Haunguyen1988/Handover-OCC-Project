@@ -11,7 +11,6 @@ import type { HandoverDetail } from '../../lib/types';
 
 const SHIFT_LABEL_KEY = {
   Morning: 'shift.morning',
-  Afternoon: 'shift.afternoon',
   Night: 'shift.night',
 } as const;
 

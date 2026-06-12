@@ -20,8 +20,8 @@ export function HandoverTable({ handovers, categoriesByHandover, emptyAction }: 
   }
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="grid grid-cols-[10rem_10rem_minmax(0,1fr)_8rem_5rem_5rem_3rem_2rem] gap-3 px-3 text-[11px] font-semibold uppercase tracking-wide text-fg-mute">
+    <div className="overflow-hidden rounded-md border border-line bg-bg-elev">
+      <div className="grid grid-cols-[10rem_10rem_minmax(0,1fr)_8rem_5rem_5rem_3rem_2rem] gap-3 border-b border-line-soft bg-bg-row px-4 py-2.5 text-[11px] font-medium uppercase tracking-[0.08em] text-fg-mute">
         <div>Date · shift</div>
         <div>Reference</div>
         <div>Prepared by</div>
@@ -31,13 +31,15 @@ export function HandoverTable({ handovers, categoriesByHandover, emptyAction }: 
         <div>CF</div>
         <div>Ack</div>
       </div>
-      {handovers.map((h) => (
-        <HandoverRow
-          key={h.id}
-          handover={h}
-          categories={categoriesByHandover?.[h.id] ?? []}
-        />
-      ))}
+      <div className="divide-y divide-line-soft">
+        {handovers.map((h) => (
+          <HandoverRow
+            key={h.id}
+            handover={h}
+            categories={categoriesByHandover?.[h.id] ?? []}
+          />
+        ))}
+      </div>
     </div>
   );
 }

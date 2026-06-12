@@ -11,7 +11,6 @@ import type { HandoverListRow } from '../../lib/types';
 
 const SHIFT_LABEL: Record<HandoverListRow['shift'], string> = {
   Morning: 'Morning',
-  Afternoon: 'Afternoon',
   Night: 'Night',
 };
 

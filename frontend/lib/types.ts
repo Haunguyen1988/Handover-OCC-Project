@@ -7,11 +7,13 @@
  * BR-02: never accept `referenceId` from the client; the server generates it.
  */
 
-export type Shift = 'Morning' | 'Afternoon' | 'Night';
+export type Shift = 'Morning' | 'Night';
 
 export type Priority = 'Low' | 'Normal' | 'High' | 'Critical';
 
 export type ItemStatus = 'Open' | 'Monitoring' | 'Resolved';
+
+export type AckAlertSeverity = 'none' | 'warn' | 'breach';
 
 export type UserRole = 'OCC_STAFF' | 'SUPERVISOR' | 'MANAGEMENT_VIEWER' | 'ADMIN';
 
@@ -181,6 +183,20 @@ export interface DashboardSummary {
   byPriority: Record<Priority, number>;
   byShift: Record<Shift, number>;
   abnormalEventsByType: Record<string, number>;
+  ackAlert: AckAlert;
+}
+
+/**
+ * Stale unacknowledged High/Critical handovers, summarised regardless of
+ * operational date (mirrors the backend `ackAlert` field). `severity` is the
+ * more urgent of the Critical and High classifications.
+ */
+export interface AckAlert {
+  severity: AckAlertSeverity;
+  unackedCount: number;
+  criticalCount: number;
+  highCount: number;
+  oldestUnackedMinutes: number;
 }
 
 export interface PaginationMeta {

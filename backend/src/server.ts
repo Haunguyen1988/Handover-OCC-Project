@@ -38,5 +38,15 @@ if (require.main === module) {
     console.log(`OCC backend listening on http://localhost:${port}`)
   })
 
-  startAckAlertScheduler()
+  // Tier 3 ack-alert push. Logs whether it armed so a misconfigured env
+  // (missing ACK_ALERT_WEBHOOK_URL) is visible in the boot log instead of
+  // silently never pushing.
+  const ackAlertStop = startAckAlertScheduler()
+  if (ackAlertStop) {
+    console.log('[ack-alert] breach webhook scheduler started')
+  } else {
+    console.log(
+      '[ack-alert] breach webhook scheduler disabled (set ACK_ALERT_WEBHOOK_URL to enable)'
+    )
+  }
 }
